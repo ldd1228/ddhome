@@ -7,6 +7,7 @@ import AboutSection from '@/components/sections/AboutSection';
 import ProjectsSection from '@/components/sections/ProjectsSection';
 import InterestsSection from '@/components/sections/InterestsSection';
 import ContactSection from '@/components/sections/ContactSection';
+import { Toaster } from '@/components/ui/sonner';
 
 const App = () => {
   const [currentSection, setCurrentSection] = useState<SectionType>('home');
@@ -40,6 +41,9 @@ const App = () => {
       <main className="xl:ml-64 pt-16 xl:pt-0 pb-20 xl:pb-0">
         {renderSection()}
       </main>
+
+      {/* Toast 通知 */}
+      <Toaster position="top-center" richColors />
     </div>
   );
 };

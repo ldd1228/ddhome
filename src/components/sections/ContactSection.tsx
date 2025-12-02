@@ -3,8 +3,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Mail, Send, CheckCircle2 } from 'lucide-react';
+import { Mail, Send, CheckCircle2, Loader2 } from 'lucide-react';
 import { ContactForm } from '@/types';
+import { toast } from 'sonner';
+import { supabase } from '@/db/supabase';
 
 export default function ContactSection() {
   const [formData, setFormData] = useState<ContactForm>({
@@ -13,21 +15,63 @@ export default function ContactSection() {
     message: '',
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // 模拟提交
-    console.log('表单数据：', formData);
-    
-    // 显示成功动画
-    setIsSubmitted(true);
-    
-    // 3秒后重置表单
-    setTimeout(() => {
-      setFormData({ name: '', email: '', message: '' });
-      setIsSubmitted(false);
-    }, 3000);
+    // 验证表单
+    if (!formData.name.trim() || !formData.email.trim() || !formData.message.trim()) {
+      toast.error('请填写所有必填字段');
+      return;
+    }
+
+    // 验证邮箱格式
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      toast.error('请输入有效的邮箱地址');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // 调用 Edge Function 发送邮件
+      const { data, error } = await supabase.functions.invoke('send-contact-email', {
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          message: formData.message,
+        }),
+      });
+
+      if (error) {
+        const errorMsg = await error?.context?.text();
+        console.error('Edge Function 错误：', errorMsg);
+        toast.error('发送失败，请稍后重试');
+        setIsLoading(false);
+        return;
+      }
+
+      if (data?.success) {
+        // 显示成功动画
+        setIsSubmitted(true);
+        toast.success('留言已成功发送到邮箱！');
+        
+        // 3秒后重置表单
+        setTimeout(() => {
+          setFormData({ name: '', email: '', message: '' });
+          setIsSubmitted(false);
+        }, 3000);
+      } else {
+        toast.error(data?.error || '发送失败，请稍后重试');
+      }
+    } catch (err) {
+      console.error('发送留言时出错：', err);
+      toast.error('发送失败，请检查网络连接');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -80,7 +124,7 @@ export default function ContactSection() {
                 收到啦！
               </h3>
               <p className="font-serif text-foreground/70">
-                感谢你的留言，我会尽快回复的 💌
+                留言已发送到我的邮箱，我会尽快回复的 💌
               </p>
             </div>
           ) : (
@@ -97,6 +141,7 @@ export default function ContactSection() {
                   onChange={handleChange}
                   placeholder="请输入你的名字"
                   required
+                  disabled={isLoading}
                   className="font-serif"
                 />
               </div>
@@ -113,6 +158,7 @@ export default function ContactSection() {
                   onChange={handleChange}
                   placeholder="请输入你的邮箱"
                   required
+                  disabled={isLoading}
                   className="font-serif"
                 />
               </div>
@@ -128,6 +174,7 @@ export default function ContactSection() {
                   onChange={handleChange}
                   placeholder="写下你想说的话..."
                   required
+                  disabled={isLoading}
                   rows={6}
                   className="font-serif resize-none"
                 />
@@ -135,11 +182,21 @@ export default function ContactSection() {
 
               <Button
                 type="submit"
+                disabled={isLoading}
                 className="w-full stamp-button py-6 text-lg font-serif"
                 size="lg"
               >
-                <Send className="mr-2 w-5 h-5" />
-                寄出明信片
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 w-5 h-5 animate-spin" />
+                    正在发送...
+                  </>
+                ) : (
+                  <>
+                    <Send className="mr-2 w-5 h-5" />
+                    寄出明信片
+                  </>
+                )}
               </Button>
             </form>
           )}
