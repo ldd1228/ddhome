@@ -1,6 +1,7 @@
 import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SectionType } from '@/types';
+import avatarImage from '/public/images/avatar.jpg';
 
 interface HomeSectionProps {
   onNavigate: (section: SectionType) => void;
@@ -14,7 +15,7 @@ export default function HomeSection({ onNavigate }: HomeSectionProps) {
         <div className="mb-8 flex justify-center">
           <div className="relative">
             <img
-              src="/images/avatar.jpg"
+              src={avatarImage}
               alt="头像"
               className="w-48 h-48 rounded-full object-cover border-4 border-primary shadow-lg"
             />

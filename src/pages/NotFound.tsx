@@ -1,5 +1,7 @@
 import { Link } from "react-router-dom";
 import PageMeta from "@/components/common/PageMeta";
+import error404Light from '/public/images/error/404.svg';
+import error404Dark from '/public/images/error/404-dark.svg';
 
 export default function NotFound() {
   return (
@@ -11,9 +13,9 @@ export default function NotFound() {
             错误
           </h1>
 
-          <img src="/images/error/404.svg" alt="404" className="dark:hidden" />
+          <img src={error404Light} alt="404" className="dark:hidden" />
           <img
-            src="/images/error/404-dark.svg"
+            src={error404Dark}
             alt="404"
             className="hidden dark:block"
           />
