@@ -30,7 +30,7 @@ export default function HomeSection({ onNavigate }: HomeSectionProps) {
             嘿，欢迎进来喝杯茶！
           </h1>
           <p className="text-xl max-xl:text-lg font-serif text-foreground/80 leading-relaxed max-w-2xl mx-auto">
-            这里是我用代码、镜头和一点点好奇心搭的小木屋。
+            这里是我用代码、镜头和一点点好奇心搭的小屋子。
             <br />
             翻一翻，也许你会找到我们一起爱上的那件小事。
           </p>

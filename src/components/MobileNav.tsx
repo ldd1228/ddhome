@@ -21,7 +21,7 @@ export default function MobileNav({ currentSection, onSectionChange }: MobileNav
       {/* 顶部标题栏 */}
       <header className="fixed top-0 left-0 right-0 bg-sidebar-background border-b border-sidebar-border px-4 py-3 z-50">
         <h1 className="text-2xl font-handwriting text-sidebar-foreground text-center">
-          温暖小木屋
+          蛋蛋小屋
         </h1>
       </header>
 

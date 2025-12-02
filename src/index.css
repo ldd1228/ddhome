@@ -11,7 +11,7 @@ All colors MUST be HSL.
   :root {
     --radius: 1rem;
     
-    /* 温暖小木屋配色方案 */
+    /* 蛋蛋小屋配色方案 */
     /* 奶油白 #FFF8F0 -> hsl(30, 100%, 97%) */
     --background: 30 100% 97%;
     /* 燕麦棕 #D4B996 -> hsl(35, 45%, 71%) */

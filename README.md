@@ -1,99 +1,71 @@
-## 介绍
+# 🏡 蛋蛋小屋
 
-项目介绍
+一个温暖亲切的个人展示网站，用代码、镜头和一点点好奇心搭建的线上空间。
 
-## 目录结构
+## ✨ 网站特色
 
-```
-├── README.md # 说明文档
-├── components.json # 组件库配置
-├── eslint.config.js # eslint 配置
-├── index.html # 入口文件
-├── package.json # 包管理
-├── postcss.config.js # postcss 配置
-├── public # 静态资源目录
-│   ├── favicon.png # 图标
-│   └── images # 图片资源
-├── src # 源码目录
-│   ├── App.tsx # 入口文件
-│   ├── components # 组件目录
-│   ├── context # 上下文目录
-│   ├── db # 数据库配置目录
-│   ├── hooks # 通用钩子函数目录
-│   ├── index.css # 全局样式
-│   ├── layout # 布局目录
-│   ├── lib # 工具库目录
-│   ├── main.tsx # 入口文件
-│   ├── routes.tsx # 路由配置
-│   ├── pages # 页面目录
-│   ├── services  # 数据库交互目录
-│   ├── types   # 类型定义目录
-├── tsconfig.app.json  # ts 前端配置文件
-├── tsconfig.json # ts 配置文件
-├── tsconfig.node.json # ts node端配置文件
-└── vite.config.ts # vite 配置文件
-```
+- 🎨 **温暖配色**：奶油白 + 燕麦棕 + 鼠尾草绿 + 暮霞粉
+- ✍️ **手写字体**：马善政楷体增添亲切感
+- 📸 **Polaroid相框**：独特的照片展示方式
+- 💌 **明信片表单**：温馨的留言体验
+- ✉️ **真实邮件**：访客留言直接发送到邮箱
 
-## 技术栈
+## 🏠 五大区域
 
-Vite、TypeScript、React、Supabase
+1. **门廊（首页）** - 欢迎页面，展示头像和快速导航
+2. **客厅（关于我）** - 个人故事和时间轴
+3. **工作桌（项目集）** - 项目展示和详情查看
+4. **收藏架（兴趣角）** - Polaroid相框样式的兴趣展示
+5. **留言簿（联系我）** - 明信片风格的联系表单
 
-## 本地开发
+## 🚀 快速开始
 
-### 如何在本地编辑代码？
+### 1. 浏览网站
+网站现在就可以使用了！所有功能都已就绪。
 
-您可以选择 [VSCode](https://code.visualstudio.com/Download) 或者您常用的任何 IDE 编辑器，唯一的要求是安装 Node.js 和 npm.
+### 2. 配置邮件功能
+为了让访客的留言能够发送到您的邮箱，需要配置 Resend API Key：
 
-### 环境要求
+1. 注册 Resend 账号：https://resend.com
+2. 获取 API Key
+3. 在 Supabase 环境变量中配置 `RESEND_API_KEY`
 
-```
-# Node.js ≥ 20
-# npm ≥ 10
-例如：
-# node -v   # v20.18.3
-# npm -v    # 10.8.2
-```
+**详细步骤请查看：** `docs/快速开始.md`
 
-具体安装步骤如下：
+### 3. 自定义内容
+编辑对应的组件文件，修改为您自己的信息：
+- 首页：`src/components/sections/HomeSection.tsx`
+- 关于我：`src/components/sections/AboutSection.tsx`
+- 项目集：`src/components/sections/ProjectsSection.tsx`
+- 兴趣角：`src/components/sections/InterestsSection.tsx`
+- 联系我：`src/components/sections/ContactSection.tsx`
 
-### 在 Windows 上安装 Node.js
+## 📚 文档
 
-```
-# Step 1: 访问Node.js官网：https://nodejs.org/，点击下载后，会根据你的系统自动选择合适的版本（32位或64位）。
-# Step 2: 运行安装程序：下载完成后，双击运行安装程序。
-# Step 3: 完成安装：按照安装向导完成安装过程。
-# Step 4: 验证安装：在命令提示符（cmd）或IDE终端（terminal）中输入 node -v 和 npm -v 来检查 Node.js 和 npm 是否正确安装。
-```
+- **快速开始.md** - 快速配置和使用指南
+- **邮件配置说明.md** - 邮件功能详细配置步骤
+- **使用指南.md** - 完整的功能使用说明
+- **网站说明.md** - 设计特点和功能介绍
+- **项目总结.md** - 技术实现总结
+- **功能清单.md** - 功能实现对照表
 
-### 在 macOS 上安装 Node.js
+## 🛠️ 技术栈
 
-```
-# Step 1: 使用Homebrew安装（推荐方法）：打开终端。输入命令brew install node并回车。如果尚未安装Homebrew，需要先安装Homebrew，
-可以通过在终端中运行如下命令来安装：
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-或者使用官网安装程序：访问Node.js官网。下载macOS的.pkg安装包。打开下载的.pkg文件，按照提示完成安装。
-# Step 2: 验证安装：在命令提示符（cmd）或IDE终端（terminal）中输入 node -v 和 npm -v 来检查 Node.js 和 npm 是否正确安装。
-```
+- **前端框架**：React 18 + TypeScript
+- **样式方案**：Tailwind CSS
+- **UI组件**：shadcn/ui
+- **后端服务**：Supabase Edge Functions
+- **邮件服务**：Resend
+- **构建工具**：Vite
 
-### 安装完后按照如下步骤操作：
+## 📧 联系邮箱
 
-```
-# Step 1: 下载代码包
-# Step 2: 解压代码包
-# Step 3: 用IDE打开代码包，进入代码目录
-# Step 4: IDE终端输入命令行，安装依赖：npm i
-# Step 5: IDE终端输入命令行，启动开发服务器：npm run dev -- --host 127.0.0.1
-```
+1660296253@qq.com
 
-### 如何开发后端服务？
+## 📄 许可
 
-配置环境变量，安装相关依赖
-如需使用数据库，请使用 supabase 官方版本或自行部署开源版本的 Supabase
+2025 蛋蛋小屋
 
-### 如何配置应用中的三方 API？
+---
 
-具体三方 API 调用方法，请参考帮助文档：[源码导出](https://cloud.baidu.com/doc/MIAODA/s/Xmewgmsq7)，了解更多详细内容。
-
-## 了解更多
-
-您也可以查看帮助文档：[源码导出](https://cloud.baidu.com/doc/MIAODA/s/Xmewgmsq7)，了解更多详细内容。
+**祝您使用愉快！** 🎉✨

@@ -78,9 +78,9 @@ Deno.serve(async (req: Request) => {
 
     // 构建邮件内容
     const emailContent = {
-      from: 'Warm Cabin <onboarding@resend.dev>', // Resend 的默认发件地址
+      from: 'Egg Cabin <onboarding@resend.dev>', // Resend 的默认发件地址
       to: ['1660296253@qq.com'], // 您的邮箱
-      subject: `【温暖小木屋】来自 ${name} 的留言`,
+      subject: `【蛋蛋小屋】来自 ${name} 的留言`,
       html: `
         <!DOCTYPE html>
         <html>
@@ -166,7 +166,7 @@ Deno.serve(async (req: Request) => {
             <div class="container">
               <div class="header">
                 <h1 class="title">📮 新的留言</h1>
-                <p class="subtitle">来自温暖小木屋的访客</p>
+                <p class="subtitle">来自蛋蛋小屋的访客</p>
               </div>
               
               <div class="content">
@@ -187,7 +187,7 @@ Deno.serve(async (req: Request) => {
               </div>
               
               <div class="footer">
-                <div class="stamp">温暖小木屋 · 留言簿</div>
+                <div class="stamp">蛋蛋小屋 · 留言簿</div>
                 <p style="margin-top: 15px;">这是一封来自您的个人网站的自动邮件</p>
               </div>
             </div>
@@ -195,7 +195,7 @@ Deno.serve(async (req: Request) => {
         </html>
       `,
       text: `
-【温暖小木屋】新留言
+【蛋蛋小屋】新留言
 
 访客姓名：${name}
 联系邮箱：${email}

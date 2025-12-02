@@ -21,7 +21,7 @@ export default function Sidebar({ currentSection, onSectionChange }: SidebarProp
       {/* Logo/标题 */}
       <div className="mb-12">
         <h1 className="text-3xl font-handwriting text-sidebar-foreground mb-2">
-          温暖小木屋
+          蛋蛋小屋
         </h1>
         <p className="text-sm text-sidebar-foreground/70 font-serif">
           一个温暖的角落
