@@ -46,9 +46,20 @@ export default function ContactSection() {
       });
 
       if (error) {
-        const errorMsg = await error?.context?.text();
-        console.error('Edge Function 错误：', errorMsg);
-        toast.error('发送失败，请稍后重试');
+        console.error('Edge Function 调用错误：', error);
+        let errorMsg = '发送失败，请稍后重试';
+        
+        try {
+          const errorText = await error?.context?.text();
+          if (errorText) {
+            const errorData = JSON.parse(errorText);
+            errorMsg = errorData.error || errorMsg;
+          }
+        } catch (e) {
+          console.error('解析错误信息失败：', e);
+        }
+        
+        toast.error(errorMsg);
         setIsLoading(false);
         return;
       }
@@ -64,7 +75,9 @@ export default function ContactSection() {
           setIsSubmitted(false);
         }, 3000);
       } else {
-        toast.error(data?.error || '发送失败，请稍后重试');
+        const errorMsg = data?.error || '发送失败，请稍后重试';
+        console.error('发送失败：', errorMsg);
+        toast.error(errorMsg);
       }
     } catch (err) {
       console.error('发送留言时出错：', err);
