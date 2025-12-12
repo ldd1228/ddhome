@@ -1,9 +1,16 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
+interface MediaFile {
+  type: 'image' | 'video' | 'drawing';
+  url: string;
+  name: string;
+}
+
 interface ContactFormData {
   name: string;
   email: string;
   message: string;
+  mediaFiles?: MediaFile[];
 }
 
 Deno.serve(async (req: Request) => {
@@ -20,7 +27,7 @@ Deno.serve(async (req: Request) => {
 
   try {
     // 解析请求数据
-    const { name, email, message }: ContactFormData = await req.json();
+    const { name, email, message, mediaFiles = [] }: ContactFormData = await req.json();
 
     // 验证必填字段
     if (!name || !email || !message) {
@@ -76,10 +83,47 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    // 构建媒体文件 HTML
+    let mediaHtml = '';
+    if (mediaFiles && mediaFiles.length > 0) {
+      mediaHtml = `
+        <div class="field">
+          <span class="label">🎨 附件内容：</span>
+          <div class="media-grid">
+      `;
+      
+      for (const file of mediaFiles) {
+        if (file.type === 'image' || file.type === 'drawing') {
+          mediaHtml += `
+            <div class="media-item">
+              <img src="${file.url}" alt="${file.name}" style="max-width: 100%; border-radius: 8px; margin-bottom: 8px;" />
+              <p style="font-size: 12px; color: #A8A8A8; margin: 0;">${file.name}</p>
+            </div>
+          `;
+        } else if (file.type === 'video') {
+          mediaHtml += `
+            <div class="media-item">
+              <div style="background: #FFF8F0; padding: 20px; border-radius: 8px; text-align: center; margin-bottom: 8px;">
+                <p style="margin: 0 0 10px 0;">🎬 视频文件</p>
+                <a href="${file.url}" style="color: #8B7355; text-decoration: none; padding: 8px 16px; border: 2px solid #D4B996; border-radius: 8px; display: inline-block;">点击查看视频</a>
+              </div>
+              <p style="font-size: 12px; color: #A8A8A8; margin: 0;">${file.name}</p>
+            </div>
+          `;
+        }
+      }
+      
+      mediaHtml += `
+          </div>
+        </div>
+      `;
+    }
+
     // 构建邮件内容
     const emailContent = {
       from: 'Egg Cabin <onboarding@resend.dev>', // Resend 的默认发件地址
       to: ['1660296253@qq.com'], // 您的邮箱
+      reply_to: email, // 设置回复地址为留言者邮箱
       subject: `【蛋蛋小屋】来自 ${name} 的留言`,
       html: `
         <!DOCTYPE html>
@@ -143,6 +187,17 @@ Deno.serve(async (req: Request) => {
                 white-space: pre-wrap;
                 word-wrap: break-word;
               }
+              .media-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+                gap: 16px;
+                margin-top: 12px;
+              }
+              .media-item {
+                background: #FFF8F0;
+                padding: 12px;
+                border-radius: 8px;
+              }
               .footer {
                 text-align: center;
                 margin-top: 30px;
@@ -184,11 +239,14 @@ Deno.serve(async (req: Request) => {
                   <span class="label">💌 留言内容：</span>
                   <div class="message-box">${message}</div>
                 </div>
+                
+                ${mediaHtml}
               </div>
               
               <div class="footer">
                 <div class="stamp">蛋蛋小屋 · 留言簿</div>
                 <p style="margin-top: 15px;">这是一封来自您的个人网站的自动邮件</p>
+                <p style="margin-top: 10px;">💡 提示：您可以直接回复此邮件与留言者联系</p>
               </div>
             </div>
           </body>
@@ -203,8 +261,13 @@ Deno.serve(async (req: Request) => {
 留言内容：
 ${message}
 
+${mediaFiles && mediaFiles.length > 0 ? `
+附件内容：
+${mediaFiles.map(f => `- ${f.name}: ${f.url}`).join('\n')}
+` : ''}
 ---
 这是一封来自您的个人网站的自动邮件
+💡 提示：您可以直接回复此邮件与留言者联系
       `.trim(),
     };
 

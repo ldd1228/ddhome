@@ -1,12 +1,22 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Mail, Send, CheckCircle2, Loader2 } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Mail, Send, CheckCircle2, Loader2, Image as ImageIcon, Video, Palette, X, Upload } from 'lucide-react';
 import { ContactForm } from '@/types';
 import { toast } from 'sonner';
 import { supabase } from '@/db/supabase';
+import { uploadImage, uploadVideo, uploadDrawing } from '@/utils/fileUpload';
+import DrawingBoard from '@/components/DrawingBoard';
+
+interface MediaFile {
+  type: 'image' | 'video' | 'drawing';
+  url: string;
+  path: string;
+  name: string;
+}
 
 export default function ContactSection() {
   const [formData, setFormData] = useState<ContactForm>({
@@ -16,6 +26,94 @@ export default function ContactSection() {
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([]);
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const [showDrawingBoard, setShowDrawingBoard] = useState(false);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
+
+  // 处理图片上传
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setUploadingFile(true);
+    try {
+      for (const file of Array.from(files)) {
+        const { url, path } = await uploadImage(file);
+        setMediaFiles(prev => [...prev, {
+          type: 'image',
+          url,
+          path,
+          name: file.name,
+        }]);
+        toast.success(`图片 "${file.name}" 上传成功！`);
+      }
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : '图片上传失败';
+      toast.error(errorMsg);
+    } finally {
+      setUploadingFile(false);
+      if (imageInputRef.current) {
+        imageInputRef.current.value = '';
+      }
+    }
+  };
+
+  // 处理视频上传
+  const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setUploadingFile(true);
+    try {
+      for (const file of Array.from(files)) {
+        const { url, path } = await uploadVideo(file);
+        setMediaFiles(prev => [...prev, {
+          type: 'video',
+          url,
+          path,
+          name: file.name,
+        }]);
+        toast.success(`视频 "${file.name}" 上传成功！`);
+      }
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : '视频上传失败';
+      toast.error(errorMsg);
+    } finally {
+      setUploadingFile(false);
+      if (videoInputRef.current) {
+        videoInputRef.current.value = '';
+      }
+    }
+  };
+
+  // 处理画板保存
+  const handleDrawingSave = async (dataUrl: string) => {
+    setUploadingFile(true);
+    try {
+      const { url, path } = await uploadDrawing(dataUrl);
+      setMediaFiles(prev => [...prev, {
+        type: 'drawing',
+        url,
+        path,
+        name: `画作_${new Date().toLocaleString('zh-CN')}`,
+      }]);
+      toast.success('画作保存成功！');
+      setShowDrawingBoard(false);
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : '画作保存失败';
+      toast.error(errorMsg);
+    } finally {
+      setUploadingFile(false);
+    }
+  };
+
+  // 删除媒体文件
+  const handleRemoveMedia = (index: number) => {
+    setMediaFiles(prev => prev.filter((_, i) => i !== index));
+    toast.success('文件已移除');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,6 +140,11 @@ export default function ContactSection() {
           name: formData.name,
           email: formData.email,
           message: formData.message,
+          mediaFiles: mediaFiles.map(f => ({
+            type: f.type,
+            url: f.url,
+            name: f.name,
+          })),
         }),
       });
 
@@ -72,6 +175,7 @@ export default function ContactSection() {
         // 3秒后重置表单
         setTimeout(() => {
           setFormData({ name: '', email: '', message: '' });
+          setMediaFiles([]);
           setIsSubmitted(false);
         }, 3000);
       } else {
@@ -96,7 +200,7 @@ export default function ContactSection() {
 
   return (
     <div className="min-h-screen py-20 px-4 fade-in">
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-4xl mx-auto">
         {/* 标题 */}
         <div className="text-center mb-16">
           <h2 className="text-5xl max-xl:text-4xl font-handwriting text-foreground mb-4">
@@ -193,9 +297,162 @@ export default function ContactSection() {
                 />
               </div>
 
+              {/* 媒体上传区域 */}
+              <div className="space-y-4">
+                <Label className="font-serif text-foreground">
+                  添加图片、视频或画作（可选）
+                </Label>
+                
+                <Tabs defaultValue="upload" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="upload" className="gap-2">
+                      <Upload className="w-4 h-4" />
+                      上传文件
+                    </TabsTrigger>
+                    <TabsTrigger value="draw" className="gap-2">
+                      <Palette className="w-4 h-4" />
+                      画板创作
+                    </TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="upload" className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      {/* 图片上传 */}
+                      <div>
+                        <input
+                          ref={imageInputRef}
+                          type="file"
+                          accept="image/jpeg,image/png,image/gif,image/webp"
+                          multiple
+                          onChange={handleImageUpload}
+                          className="hidden"
+                          id="image-upload"
+                          disabled={uploadingFile || isLoading}
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="w-full gap-2"
+                          onClick={() => imageInputRef.current?.click()}
+                          disabled={uploadingFile || isLoading}
+                        >
+                          <ImageIcon className="w-4 h-4" />
+                          上传图片
+                        </Button>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          支持 JPG、PNG、GIF、WEBP，最大 5MB
+                        </p>
+                      </div>
+
+                      {/* 视频上传 */}
+                      <div>
+                        <input
+                          ref={videoInputRef}
+                          type="file"
+                          accept="video/mp4,video/webm,video/quicktime"
+                          multiple
+                          onChange={handleVideoUpload}
+                          className="hidden"
+                          id="video-upload"
+                          disabled={uploadingFile || isLoading}
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="w-full gap-2"
+                          onClick={() => videoInputRef.current?.click()}
+                          disabled={uploadingFile || isLoading}
+                        >
+                          <Video className="w-4 h-4" />
+                          上传视频
+                        </Button>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          支持 MP4、WEBM、MOV，最大 10MB
+                        </p>
+                      </div>
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="draw" className="space-y-4">
+                    {!showDrawingBoard ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full gap-2"
+                        onClick={() => setShowDrawingBoard(true)}
+                        disabled={uploadingFile || isLoading}
+                      >
+                        <Palette className="w-4 h-4" />
+                        打开画板
+                      </Button>
+                    ) : (
+                      <div className="space-y-4">
+                        <DrawingBoard
+                          onSave={handleDrawingSave}
+                          onClear={() => {}}
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="w-full"
+                          onClick={() => setShowDrawingBoard(false)}
+                          disabled={uploadingFile}
+                        >
+                          关闭画板
+                        </Button>
+                      </div>
+                    )}
+                  </TabsContent>
+                </Tabs>
+
+                {/* 已上传的文件列表 */}
+                {mediaFiles.length > 0 && (
+                  <div className="space-y-2">
+                    <Label className="font-serif text-foreground text-sm">
+                      已添加的文件：
+                    </Label>
+                    <div className="grid grid-cols-2 gap-4">
+                      {mediaFiles.map((file, index) => (
+                        <div
+                          key={index}
+                          className="relative group border-2 border-border rounded-lg overflow-hidden"
+                        >
+                          {file.type === 'video' ? (
+                            <div className="aspect-video bg-muted flex items-center justify-center">
+                              <Video className="w-8 h-8 text-muted-foreground" />
+                            </div>
+                          ) : (
+                            <img
+                              src={file.url}
+                              alt={file.name}
+                              className="w-full aspect-video object-cover"
+                            />
+                          )}
+                          <div className="p-2 bg-background/95">
+                            <p className="text-xs font-serif truncate">
+                              {file.name}
+                            </p>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="icon"
+                            className="absolute top-2 right-2 w-6 h-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => handleRemoveMedia(index)}
+                            disabled={isLoading}
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <Button
                 type="submit"
-                disabled={isLoading}
+                disabled={isLoading || uploadingFile}
                 className="w-full stamp-button py-6 text-lg font-serif"
                 size="lg"
               >
