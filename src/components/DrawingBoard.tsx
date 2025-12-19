@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Paintbrush, Eraser, Trash2, Download } from 'lucide-react';
+import { Paintbrush, Eraser, Trash2, Download, Maximize2, Minimize2, X } from 'lucide-react';
 
 interface DrawingBoardProps {
   onSave: (dataUrl: string) => void;
@@ -11,11 +11,15 @@ interface DrawingBoardProps {
 export default function DrawingBoard({ onSave, onClear }: DrawingBoardProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const fullscreenRef = useRef<HTMLDivElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [color, setColor] = useState('#000000');
   const [lineWidth, setLineWidth] = useState(3);
   const [tool, setTool] = useState<'pen' | 'eraser'>('pen');
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [canvasData, setCanvasData] = useState<string | null>(null);
 
+  // 初始化画布
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -23,9 +27,47 @@ export default function DrawingBoard({ onSave, onClear }: DrawingBoardProps) {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // 设置画布背景为白色
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // 如果有保存的画布数据，恢复它
+    if (canvasData) {
+      const img = new Image();
+      img.onload = () => {
+        ctx.drawImage(img, 0, 0);
+      };
+      img.src = canvasData;
+    } else {
+      // 设置画布背景为白色
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+  }, [canvasData, isFullscreen]);
+
+  // 进入全屏前保存画布内容
+  const enterFullscreen = () => {
+    const canvas = canvasRef.current;
+    if (canvas) {
+      setCanvasData(canvas.toDataURL('image/png'));
+    }
+    setIsFullscreen(true);
+    // 禁止页面滚动
+    document.body.style.overflow = 'hidden';
+  };
+
+  // 退出全屏
+  const exitFullscreen = () => {
+    const canvas = canvasRef.current;
+    if (canvas) {
+      setCanvasData(canvas.toDataURL('image/png'));
+    }
+    setIsFullscreen(false);
+    // 恢复页面滚动
+    document.body.style.overflow = '';
+  };
+
+  // 组件卸载时恢复页面滚动
+  useEffect(() => {
+    return () => {
+      document.body.style.overflow = '';
+    };
   }, []);
 
   // 获取坐标（支持鼠标和触摸）
@@ -127,12 +169,203 @@ export default function DrawingBoard({ onSave, onClear }: DrawingBoardProps) {
     '#FFA500', // 橙色
   ];
 
+  // 普通模式渲染
+  if (!isFullscreen) {
+    return (
+      <div className="space-y-4" ref={containerRef}>
+        {/* 工具栏 */}
+        <div className="space-y-3">
+          {/* 第一行：工具选择和全屏按钮 */}
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              variant={tool === 'pen' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setTool('pen')}
+              className="gap-2"
+            >
+              <Paintbrush className="w-4 h-4" />
+              画笔
+            </Button>
+            <Button
+              type="button"
+              variant={tool === 'eraser' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setTool('eraser')}
+              className="gap-2"
+            >
+              <Eraser className="w-4 h-4" />
+              橡皮擦
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={enterFullscreen}
+              className="gap-2 ml-auto"
+            >
+              <Maximize2 className="w-4 h-4" />
+              全屏
+            </Button>
+          </div>
+
+          {/* 第二行：颜色选择（仅画笔模式） */}
+          {tool === 'pen' && (
+            <div className="flex flex-wrap items-center gap-2">
+              <Label className="text-sm">颜色：</Label>
+              <div className="flex flex-wrap gap-1">
+                {colors.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    className={`w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 ${
+                      color === c ? 'border-foreground scale-110' : 'border-border'
+                    }`}
+                    style={{ backgroundColor: c }}
+                    onClick={() => setColor(c)}
+                    aria-label={`选择颜色 ${c}`}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 第三行：粗细和操作按钮 */}
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2">
+              <Label htmlFor="lineWidth" className="text-sm whitespace-nowrap">
+                粗细：
+              </Label>
+              <input
+                id="lineWidth"
+                type="range"
+                min="1"
+                max="20"
+                value={lineWidth}
+                onChange={(e) => setLineWidth(Number(e.target.value))}
+                className="w-24"
+              />
+              <span className="text-sm w-10">{lineWidth}px</span>
+            </div>
+
+            <div className="flex gap-2 ml-auto">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={clearCanvas}
+                className="gap-2"
+              >
+                <Trash2 className="w-4 h-4" />
+                清空
+              </Button>
+              <Button
+                type="button"
+                variant="default"
+                size="sm"
+                onClick={saveDrawing}
+                className="gap-2"
+              >
+                <Download className="w-4 h-4" />
+                保存
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* 画布 */}
+        <div className="border-2 border-dashed border-border rounded-lg overflow-hidden bg-white">
+          <canvas
+            ref={canvasRef}
+            width={1200}
+            height={600}
+            onMouseDown={startDrawing}
+            onMouseMove={draw}
+            onMouseUp={stopDrawing}
+            onMouseLeave={stopDrawing}
+            onTouchStart={startDrawing}
+            onTouchMove={draw}
+            onTouchEnd={stopDrawing}
+            className="cursor-crosshair w-full touch-none"
+            style={{ touchAction: 'none' }}
+          />
+        </div>
+
+        <p className="text-sm text-muted-foreground">
+          💡 提示：在画布上绘制您想要的图案，完成后点击"保存"按钮。点击"全屏"可以放大画布。
+        </p>
+      </div>
+    );
+  }
+
+  // 全屏模式渲染
   return (
-    <div className="space-y-4" ref={containerRef}>
-      {/* 工具栏 */}
-      <div className="space-y-3">
-        {/* 第一行：工具选择 */}
-        <div className="flex flex-wrap items-center gap-2">
+    <div
+      ref={fullscreenRef}
+      className="fixed inset-0 z-50 bg-white flex flex-col"
+      style={{ touchAction: 'none' }}
+    >
+      {/* 顶部工具栏 - 仅显示关闭和保存按钮 */}
+      <div className="flex items-center justify-between p-3 border-b border-border bg-background/95 backdrop-blur">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={exitFullscreen}
+          className="gap-2"
+        >
+          <Minimize2 className="w-4 h-4" />
+          退出全屏
+        </Button>
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={clearCanvas}
+            className="gap-2"
+          >
+            <Trash2 className="w-4 h-4" />
+            清空
+          </Button>
+          <Button
+            type="button"
+            variant="default"
+            size="sm"
+            onClick={() => {
+              saveDrawing();
+              exitFullscreen();
+            }}
+            className="gap-2"
+          >
+            <Download className="w-4 h-4" />
+            保存
+          </Button>
+        </div>
+      </div>
+
+      {/* 画布区域 - 占据剩余空间 */}
+      <div className="flex-1 bg-white overflow-hidden">
+        <canvas
+          ref={canvasRef}
+          width={1200}
+          height={600}
+          onMouseDown={startDrawing}
+          onMouseMove={draw}
+          onMouseUp={stopDrawing}
+          onMouseLeave={stopDrawing}
+          onTouchStart={startDrawing}
+          onTouchMove={draw}
+          onTouchEnd={stopDrawing}
+          className="cursor-crosshair w-full h-full touch-none"
+          style={{ touchAction: 'none' }}
+        />
+      </div>
+
+      {/* 底部工具栏 - 画笔、颜色、粗细 */}
+      <div className="p-4 border-t border-border bg-background/95 backdrop-blur space-y-3">
+        {/* 工具选择 */}
+        <div className="flex items-center justify-center gap-2">
           <Button
             type="button"
             variant={tool === 'pen' ? 'default' : 'outline'}
@@ -155,16 +388,16 @@ export default function DrawingBoard({ onSave, onClear }: DrawingBoardProps) {
           </Button>
         </div>
 
-        {/* 第二行：颜色选择（仅画笔模式） */}
+        {/* 颜色选择（仅画笔模式） */}
         {tool === 'pen' && (
-          <div className="flex flex-wrap items-center gap-2">
-            <Label className="text-sm">颜色：</Label>
-            <div className="flex flex-wrap gap-1">
+          <div className="flex items-center justify-center gap-2">
+            <Label className="text-sm whitespace-nowrap">颜色：</Label>
+            <div className="flex gap-2">
               {colors.map((c) => (
                 <button
                   key={c}
                   type="button"
-                  className={`w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 ${
+                  className={`w-10 h-10 rounded-full border-2 transition-transform active:scale-95 ${
                     color === c ? 'border-foreground scale-110' : 'border-border'
                   }`}
                   style={{ backgroundColor: c }}
@@ -176,70 +409,23 @@ export default function DrawingBoard({ onSave, onClear }: DrawingBoardProps) {
           </div>
         )}
 
-        {/* 第三行：粗细和操作按钮 */}
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2">
-            <Label htmlFor="lineWidth" className="text-sm whitespace-nowrap">
-              粗细：
-            </Label>
-            <input
-              id="lineWidth"
-              type="range"
-              min="1"
-              max="20"
-              value={lineWidth}
-              onChange={(e) => setLineWidth(Number(e.target.value))}
-              className="w-24"
-            />
-            <span className="text-sm w-10">{lineWidth}px</span>
-          </div>
-
-          <div className="flex gap-2 ml-auto">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={clearCanvas}
-              className="gap-2"
-            >
-              <Trash2 className="w-4 h-4" />
-              清空
-            </Button>
-            <Button
-              type="button"
-              variant="default"
-              size="sm"
-              onClick={saveDrawing}
-              className="gap-2"
-            >
-              <Download className="w-4 h-4" />
-              保存
-            </Button>
-          </div>
+        {/* 粗细调节 */}
+        <div className="flex items-center justify-center gap-3">
+          <Label htmlFor="lineWidth-fullscreen" className="text-sm whitespace-nowrap">
+            粗细：
+          </Label>
+          <input
+            id="lineWidth-fullscreen"
+            type="range"
+            min="1"
+            max="20"
+            value={lineWidth}
+            onChange={(e) => setLineWidth(Number(e.target.value))}
+            className="flex-1 max-w-xs"
+          />
+          <span className="text-sm w-12 text-center">{lineWidth}px</span>
         </div>
       </div>
-
-      {/* 画布 */}
-      <div className="border-2 border-dashed border-border rounded-lg overflow-hidden bg-white">
-        <canvas
-          ref={canvasRef}
-          width={1200}
-          height={600}
-          onMouseDown={startDrawing}
-          onMouseMove={draw}
-          onMouseUp={stopDrawing}
-          onMouseLeave={stopDrawing}
-          onTouchStart={startDrawing}
-          onTouchMove={draw}
-          onTouchEnd={stopDrawing}
-          className="cursor-crosshair w-full touch-none"
-          style={{ touchAction: 'none' }}
-        />
-      </div>
-
-      <p className="text-sm text-muted-foreground">
-        💡 提示：在画布上绘制您想要的图案，完成后点击"保存"按钮
-      </p>
     </div>
   );
 }
