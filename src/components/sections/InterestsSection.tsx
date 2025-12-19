@@ -4,9 +4,9 @@ import { Interest } from '@/types';
 const interests: Interest[] = [
   {
     id: '1',
-    title: '摄影',
-    image: 'https://images.unsplash.com/photo-1452587925148-ce544e77e70d?w=600&q=80',
-    note: '用镜头捕捉生活中的美好瞬间，每一张照片都是一个故事。',
+    title: '手工',
+    image: 'https://miaoda-site-img.cdn.bcebos.com/images/baidu_image_search_db2942b5-91b1-4f7e-8984-694a1a0b4c41.jpg',
+    note: '用双手创造温暖的作品，每一件手工都承载着心意和时光。',
     rotation: -3,
   },
   {
