@@ -10,6 +10,7 @@ interface DrawingBoardProps {
 
 export default function DrawingBoard({ onSave, onClear }: DrawingBoardProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [color, setColor] = useState('#000000');
   const [lineWidth, setLineWidth] = useState(3);
@@ -27,13 +28,41 @@ export default function DrawingBoard({ onSave, onClear }: DrawingBoardProps) {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   }, []);
 
-  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  // 获取坐标（支持鼠标和触摸）
+  const getCoordinates = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+
+    let clientX: number;
+    let clientY: number;
+
+    if ('touches' in e) {
+      // 触摸事件
+      if (e.touches.length === 0) return { x: 0, y: 0 };
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else {
+      // 鼠标事件
+      clientX = e.clientX;
+      clientY = e.clientY;
+    }
+
+    const x = (clientX - rect.left) * scaleX;
+    const y = (clientY - rect.top) * scaleY;
+
+    return { x, y };
+  };
+
+  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const { x, y } = getCoordinates(e);
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -43,15 +72,14 @@ export default function DrawingBoard({ onSave, onClear }: DrawingBoardProps) {
     setIsDrawing(true);
   };
 
-  const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const draw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
     if (!isDrawing) return;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const { x, y } = getCoordinates(e);
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -100,11 +128,11 @@ export default function DrawingBoard({ onSave, onClear }: DrawingBoardProps) {
   ];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" ref={containerRef}>
       {/* 工具栏 */}
-      <div className="flex flex-wrap items-center gap-4">
-        {/* 工具选择 */}
-        <div className="flex gap-2">
+      <div className="space-y-3">
+        {/* 第一行：工具选择 */}
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             type="button"
             variant={tool === 'pen' ? 'default' : 'outline'}
@@ -127,16 +155,16 @@ export default function DrawingBoard({ onSave, onClear }: DrawingBoardProps) {
           </Button>
         </div>
 
-        {/* 颜色选择 */}
+        {/* 第二行：颜色选择（仅画笔模式） */}
         {tool === 'pen' && (
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Label className="text-sm">颜色：</Label>
-            <div className="flex gap-1">
+            <div className="flex flex-wrap gap-1">
               {colors.map((c) => (
                 <button
                   key={c}
                   type="button"
-                  className={`w-6 h-6 rounded-full border-2 transition-transform hover:scale-110 ${
+                  className={`w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 ${
                     color === c ? 'border-foreground scale-110' : 'border-border'
                   }`}
                   style={{ backgroundColor: c }}
@@ -148,45 +176,46 @@ export default function DrawingBoard({ onSave, onClear }: DrawingBoardProps) {
           </div>
         )}
 
-        {/* 粗细选择 */}
-        <div className="flex items-center gap-2">
-          <Label htmlFor="lineWidth" className="text-sm">
-            粗细：
-          </Label>
-          <input
-            id="lineWidth"
-            type="range"
-            min="1"
-            max="20"
-            value={lineWidth}
-            onChange={(e) => setLineWidth(Number(e.target.value))}
-            className="w-24"
-          />
-          <span className="text-sm w-8">{lineWidth}px</span>
-        </div>
+        {/* 第三行：粗细和操作按钮 */}
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2">
+            <Label htmlFor="lineWidth" className="text-sm whitespace-nowrap">
+              粗细：
+            </Label>
+            <input
+              id="lineWidth"
+              type="range"
+              min="1"
+              max="20"
+              value={lineWidth}
+              onChange={(e) => setLineWidth(Number(e.target.value))}
+              className="w-24"
+            />
+            <span className="text-sm w-10">{lineWidth}px</span>
+          </div>
 
-        {/* 操作按钮 */}
-        <div className="flex gap-2 ml-auto">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={clearCanvas}
-            className="gap-2"
-          >
-            <Trash2 className="w-4 h-4" />
-            清空
-          </Button>
-          <Button
-            type="button"
-            variant="default"
-            size="sm"
-            onClick={saveDrawing}
-            className="gap-2"
-          >
-            <Download className="w-4 h-4" />
-            保存画作
-          </Button>
+          <div className="flex gap-2 ml-auto">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={clearCanvas}
+              className="gap-2"
+            >
+              <Trash2 className="w-4 h-4" />
+              清空
+            </Button>
+            <Button
+              type="button"
+              variant="default"
+              size="sm"
+              onClick={saveDrawing}
+              className="gap-2"
+            >
+              <Download className="w-4 h-4" />
+              保存
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -200,13 +229,16 @@ export default function DrawingBoard({ onSave, onClear }: DrawingBoardProps) {
           onMouseMove={draw}
           onMouseUp={stopDrawing}
           onMouseLeave={stopDrawing}
-          className="cursor-crosshair w-full"
+          onTouchStart={startDrawing}
+          onTouchMove={draw}
+          onTouchEnd={stopDrawing}
+          className="cursor-crosshair w-full touch-none"
           style={{ touchAction: 'none' }}
         />
       </div>
 
       <p className="text-sm text-muted-foreground">
-        💡 提示：在画布上绘制您想要的图案，完成后点击"保存画作"按钮
+        💡 提示：在画布上绘制您想要的图案，完成后点击"保存"按钮
       </p>
     </div>
   );
