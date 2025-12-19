@@ -5,7 +5,7 @@ const interests: Interest[] = [
   {
     id: '1',
     title: '手工',
-    image: 'https://miaoda-site-img.cdn.bcebos.com/images/baidu_image_search_0812e314-9288-4db8-af59-6ffd92206b00.jpg',
+    image: 'https://miaoda-site-img.cdn.bcebos.com/images/baidu_image_search_5152ea03-b343-4ea4-a0d7-707097ee8828.jpg',
     note: '用双手创造温暖的作品，每一件手工都承载着心意和时光。',
     rotation: -3,
   },
