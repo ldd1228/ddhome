@@ -223,8 +223,8 @@ export default function DrawingBoard({ onSave, onClear }: DrawingBoardProps) {
       <div className="border-2 border-dashed border-border rounded-lg overflow-hidden bg-white">
         <canvas
           ref={canvasRef}
-          width={800}
-          height={400}
+          width={1200}
+          height={600}
           onMouseDown={startDrawing}
           onMouseMove={draw}
           onMouseUp={stopDrawing}
