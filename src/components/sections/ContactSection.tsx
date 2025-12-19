@@ -9,6 +9,8 @@ import { ContactForm } from '@/types';
 import { toast } from 'sonner';
 import { supabase } from '@/db/supabase';
 import { uploadImage, uploadVideo, uploadDrawing } from '@/utils/fileUpload';
+import { saveMessage } from '@/db/api';
+import { getVisitorUUID } from '@/components/VisitorTracker';
 import DrawingBoard from '@/components/DrawingBoard';
 
 interface MediaFile {
@@ -134,17 +136,38 @@ export default function ContactSection() {
     setIsLoading(true);
 
     try {
-      // 调用 Edge Function 发送邮件
+      // 获取访客 UUID
+      const visitor_uuid = getVisitorUUID();
+
+      // 准备媒体文件数据
+      const mediaFilesData = mediaFiles.map(f => ({
+        type: f.type,
+        url: f.url,
+        name: f.name,
+      }));
+
+      // 1. 保存留言到数据库
+      const saveResult = await saveMessage({
+        visitor_uuid,
+        name: formData.name,
+        email: formData.email,
+        message: formData.message,
+        media_files: mediaFilesData,
+        user_agent: navigator.userAgent,
+      });
+
+      if (!saveResult.success) {
+        console.error('保存留言到数据库失败：', saveResult.error);
+        // 继续发送邮件，即使数据库保存失败
+      }
+
+      // 2. 调用 Edge Function 发送邮件
       const { data, error } = await supabase.functions.invoke('send-contact-email', {
         body: JSON.stringify({
           name: formData.name,
           email: formData.email,
           message: formData.message,
-          mediaFiles: mediaFiles.map(f => ({
-            type: f.type,
-            url: f.url,
-            name: f.name,
-          })),
+          mediaFiles: mediaFilesData,
         }),
       });
 
