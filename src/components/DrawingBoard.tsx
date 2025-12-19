@@ -321,10 +321,9 @@ export default function DrawingBoard({ onSave, onClear }: DrawingBoardProps) {
         <div
           ref={fullscreenRef}
           className="fixed inset-0 z-50 bg-white flex flex-col"
-          style={{ touchAction: 'none' }}
         >
-          {/* 顶部工具栏 - 仅显示关闭和保存按钮 */}
-          <div className="flex items-center justify-between p-3 border-b border-border bg-background/95 backdrop-blur">
+          {/* 顶部工具栏 - 固定在顶部，不受触摸事件影响 */}
+          <div className="flex-shrink-0 flex items-center justify-between p-3 border-b border-border bg-white shadow-sm">
             <Button
               type="button"
               variant="ghost"
@@ -332,8 +331,8 @@ export default function DrawingBoard({ onSave, onClear }: DrawingBoardProps) {
               onClick={exitFullscreen}
               className="gap-2"
             >
-              <Minimize2 className="w-4 h-4" />
-              退出全屏
+              <X className="w-4 h-4" />
+              退出
             </Button>
             <div className="flex gap-2">
               <Button
@@ -362,8 +361,11 @@ export default function DrawingBoard({ onSave, onClear }: DrawingBoardProps) {
             </div>
           </div>
 
-          {/* 画布区域 - 占据剩余空间 */}
-          <div className="flex-1 bg-white overflow-hidden flex items-center justify-center p-4">
+          {/* 画布区域 - 占据剩余空间，禁用触摸滚动 */}
+          <div 
+            className="flex-1 bg-white overflow-hidden flex items-center justify-center"
+            style={{ touchAction: 'none' }}
+          >
             <canvas
               ref={fullscreenCanvasRef}
               width={1200}
@@ -375,13 +377,13 @@ export default function DrawingBoard({ onSave, onClear }: DrawingBoardProps) {
               onTouchStart={startDrawing}
               onTouchMove={draw}
               onTouchEnd={stopDrawing}
-              className="cursor-crosshair touch-none max-w-full max-h-full"
-              style={{ touchAction: 'none' }}
+              className="cursor-crosshair touch-none w-full h-full object-contain"
+              style={{ touchAction: 'none', maxWidth: '100%', maxHeight: '100%' }}
             />
           </div>
 
-          {/* 底部工具栏 - 画笔、颜色、粗细 */}
-          <div className="p-4 border-t border-border bg-background/95 backdrop-blur space-y-3">
+          {/* 底部工具栏 - 固定在底部 */}
+          <div className="flex-shrink-0 p-3 border-t border-border bg-white shadow-sm space-y-3">
             {/* 工具选择 */}
             <div className="flex items-center justify-center gap-2">
               <Button
@@ -408,14 +410,14 @@ export default function DrawingBoard({ onSave, onClear }: DrawingBoardProps) {
 
             {/* 颜色选择（仅画笔模式） */}
             {tool === 'pen' && (
-              <div className="flex items-center justify-center gap-2">
-                <Label className="text-sm whitespace-nowrap">颜色：</Label>
-                <div className="flex gap-2">
+              <div className="flex items-center justify-center gap-2 overflow-x-auto">
+                <Label className="text-sm whitespace-nowrap flex-shrink-0">颜色：</Label>
+                <div className="flex gap-2 flex-shrink-0">
                   {colors.map((c) => (
                     <button
                       key={c}
                       type="button"
-                      className={`w-10 h-10 rounded-full border-2 transition-transform active:scale-95 ${
+                      className={`w-10 h-10 rounded-full border-2 transition-transform active:scale-95 flex-shrink-0 ${
                         color === c ? 'border-foreground scale-110' : 'border-border'
                       }`}
                       style={{ backgroundColor: c }}
