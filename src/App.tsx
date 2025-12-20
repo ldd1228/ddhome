@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { SectionType } from '@/types';
 import Sidebar from '@/components/Sidebar';
 import MobileNav from '@/components/MobileNav';
@@ -9,12 +10,15 @@ import InterestsSection from '@/components/sections/InterestsSection';
 import ContactSection from '@/components/sections/ContactSection';
 import AdminDashboard from '@/components/admin/AdminDashboard';
 import { Toaster } from '@/components/ui/sonner';
+import { Button } from '@/components/ui/button';
+import { Lock } from 'lucide-react';
 import { recordVisit } from '@/db/api';
 import { getVisitorUUID } from '@/components/VisitorTracker';
 
 const App = () => {
   const [currentSection, setCurrentSection] = useState<SectionType>('home');
   const [isAdminMode, setIsAdminMode] = useState(false);
+  const navigate = useNavigate();
 
   // 检查 URL 参数，判断是否进入管理模式
   useEffect(() => {
@@ -59,6 +63,11 @@ const App = () => {
     window.history.pushState({}, '', window.location.pathname);
   };
 
+  // 跳转到管理后台登录页
+  const handleAdminLogin = () => {
+    navigate('/admin/login');
+  };
+
   // 如果是管理模式，显示管理后台
   if (isAdminMode) {
     return (
@@ -88,6 +97,17 @@ const App = () => {
 
   return (
     <div className="min-h-screen">
+      {/* 管理员入口按钮 - 固定在右上角 */}
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={handleAdminLogin}
+        className="fixed top-4 right-4 z-50 w-10 h-10 rounded-full bg-background/80 backdrop-blur-sm border border-border shadow-lg hover:bg-primary/10 hover:border-primary transition-all duration-300"
+        title="管理后台"
+      >
+        <Lock className="w-4 h-4 text-muted-foreground hover:text-primary transition-colors" />
+      </Button>
+
       {/* 桌面端侧边栏 */}
       <Sidebar currentSection={currentSection} onSectionChange={setCurrentSection} />
       
