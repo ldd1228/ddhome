@@ -112,9 +112,6 @@ All colors MUST be HSL.
   }
 }
 
-/* 手写风格字体 */
-@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&family=Ma+Shan+Zheng&display=swap');
-
 @layer utilities {
   /* 手写体标题 */
   .font-handwriting {
